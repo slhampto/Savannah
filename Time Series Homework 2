@@ -1,0 +1,63 @@
+library(haven)
+library(fma)
+library(tseries)
+library(expsmooth)
+library(lmtest)
+library(zoo)
+install.packages("fma")
+library(fma)
+setwd("~/Master of Science in Analytics/Times Series")
+aggregatedfile<-read.csv("aggregatedfile.csv")
+aggregatedfile<-aggregatedfile[,-c(1)]
+aggregatedfile
+
+evenmorenew<-aggregatedfile[,-c(2:3)]
+evenmorenew
+
+library(RColorBrewer)
+display.brewer.all()
+
+
+avergeaggregation<-ts(evenmorenew,start=2014,end=2019,frequency = 12)
+decomp_stl<-stl(avergeaggregation,s.window = 7)
+plot(decomp_stl,main="Decomposition Plot")
+
+
+plot(avergeaggregation,main="Average Monthly Particulate Matter 2.5",xlab="Year",ylab="Particulate Matter")
+
+
+trainset<-data.frame(aggregatedfile[1:54,])
+trainset
+trainset<-trainset[,-c(2:3)]
+trainset
+testset<-data.frame(aggregatedfile[55:60,])
+testset<-testset[,-c(2:3)]
+testset
+testobject<-ts(trainset,start=2014,frequency = 12)
+testobject
+single<-ses(testobject,initial="optimal",h=6)
+summary(single)
+
+decomp_stl
+trend<-decomp_stl$time.series[,2]
+seasonal<-decomp_stl$time.series[,1]
+remainder<-decomp_stl$time.series[,3]
+plot(trainset)
+lines(decomp_stl$time.series[,2])
+plot(trainset)
+lines(seasonal+remainder)
+lines(seasonal(decomp_stl))
+plot(trainset,choice="seasonal",main="Actual PM with Seasonally adjusted", xlab=" ",ylab=" ")
+
+firstholt<-holt(testobject,initial = "optimal",h=6)
+summary(firstholt)
+
+damped<-holt(testobject,initial = "optimal",h=6,damped = TRUE)
+summary(damped)
+
+seasonaladditive<-hw(testobject,seasonal = "additive")
+
+testobjecttest<-ts(testset,start=2014,frequency = 12)
+testobjecttest
+singletest<-ses(testobject,initial="optimal",h=6)
+summary(singletest)
